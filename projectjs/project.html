@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books and Authors</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: rgb(209, 177, 196);
+            background-image: url(./photo/Read\ A\ Book\ Motivational\ Quote\ Poster.png);
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: auto;
+            background-attachment: fixed;
+        }
+        
+        table {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+            color: rgb(201, 181, 194);
+            font-size: 25px;
+
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .book-input {
+            margin: 10px 0;
+        }
+
+        button {
+            margin-top: 20px;
+        }
+
+        input[type="text"], input[type="number"], input[type="email"] {
+            margin: 5px;
+            padding: 5px;
+            width: 200px;
+        }
+
+        .edit, .delete {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Enter Number of Books</h2>
+    <label for="numBooks">How many books would you like to enter?</label>
+    <input type="number" id="numBooks" min="1" placeholder="Enter number of books">
+    <button id="Inputs">Generate Input Fields</button>
+
+    <div id="Container"></div>
+
+    <button id="submitBooks">Submit</button>
+
+    <h3>Books List</h3>
+    <table id="booksTable">
+        <thead>
+            <tr>
+                <th>Book Name</th>
+                <th>Price</th>
+                <th>Author Name</th>
+                <th>Author Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        // 1. Author Function Constructor
+        function Author(name, email) {
+            this.name = name;
+            this.email = email;
+        }
+
+        // 2. Book Function Constructor
+        function Book(name, price, author) {
+            this.name = name;
+            this.price = price;
+            this.author = author;
+        }
+
+        let booksArray = []; // Array to hold  books
+
+        $(document).ready(function () {
+            $("#Inputs").click(function () {
+                let numBooks = $("#numBooks").val();
+                if (numBooks && numBooks > 0) {
+                    $("#Container").empty(); 
+                    for (let i = 0; i < numBooks; i++) {
+                        let bookDiv = `<div class="book-input" id="book${i}">
+                            <h4>Book ${i + 1}</h4>
+                            <label for="bookName${i}">Book Name:</label>
+                            <input type="text" id="bookName${i}" placeholder="Enter book name" required>
+
+                            <label for="price${i}">Price:</label>
+                            <input type="number" id="price${i}" placeholder="Enter price" required>
+
+                            <label for="authorName${i}">Author Name:</label>
+                            <input type="text" id="authorName${i}" placeholder="Enter author name" required>
+
+                            <label for="authorEmail${i}">Author Email:</label>
+                            <input type="email" id="authorEmail${i}" placeholder="Enter author email" required>
+                        </div>`;
+                        $("#Container").append(bookDiv);
+                    }
+                } else {
+                    alert("Please enter a valid number of books.");
+                }
+            });
+
+            $("#submitBooks").click(function () {
+                let numBooks = $("#numBooks").val();
+                booksArray = []; 
+                for (let i = 0; i < numBooks; i++) {
+                    let bookName = $(`#bookName${i}`).val();
+                    let price = $(`#price${i}`).val();
+                    let authorName = $(`#authorName${i}`).val();
+                    let authorEmail = $(`#authorEmail${i}`).val();
+
+                    if (bookName && price && authorName && authorEmail) {
+                        let author = new Author(authorName, authorEmail);
+                        let book = new Book(bookName, price, author);
+
+                        booksArray.push(book);
+                    } else {
+                        alert("Please fill all fields for each book.");
+                        return;
+                    }
+                }
+                displayBooks(); 
+            });
+
+            function displayBooks() {
+                let tableBody = $("#booksTable tbody");
+                tableBody.empty(); // Clear any previous data
+                booksArray.forEach(function (book, index) {
+                    tableBody.append(`<tr id="bookRow${index}">
+                        <td class="bookName">${book.name}</td>
+                        <td class="price">${book.price}</td>
+                        <td class="authorName">${book.author.name}</td>
+                        <td class="authorEmail">${book.author.email}</td>
+                        <td>
+                            <button class="edit" data-index="${index}">Edit</button>
+                            <button class="delete" data-index="${index}">Delete</button>
+                        </td>
+                    </tr>`);
+                });
+            }
+
+            $(document).on('click', '.edit', function () {
+                let index = $(this).data('index');
+                let book = booksArray[index];
+
+                $(`#bookName${index}`).val(book.name);
+                $(`#price${index}`).val(book.price);
+                $(`#authorName${index}`).val(book.author.name);
+                $(`#authorEmail${index}`).val(book.author.email);
+
+                $(this).replaceWith(`<button class="save" data-index="${index}">Save</button>`);
+                $(this).parent().append(`<button class="cancel" data-index="${index}">Cancel</button>`);
+            });
+
+            $(document).on('click', '.save', function () {
+                let index = $(this).data('index');
+                let updatedBook = new Book(
+                    $(`#bookName${index}`).val(),
+                    $(`#price${index}`).val(),
+                    new Author($(`#authorName${index}`).val(), $(`#authorEmail${index}`).val())
+                );
+
+                
+                booksArray[index] = updatedBook;
+                displayBooks(); 
+
+            
+                $(this).remove();
+                $(this).siblings('.cancel').remove();
+            });
+
+        
+            $(document).on('click', '.cancel', function () {
+                displayBooks(); 
+
+                $(this).siblings('.save').remove();
+                $(this).remove();
+            });
+
+            
+            $(document).on('click', '.delete', function () {
+                let index = $(this).data('index');
+                booksArray.splice(index, 1);  
+                displayBooks(); 
+            });
+        });
+    </script>
+</body>
+</html>
